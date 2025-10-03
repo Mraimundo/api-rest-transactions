@@ -28,10 +28,6 @@ export async function transactionsRoutes(app: FastifyInstance) {
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
       });
-      reply.setCookie("sessionId", sessionId, {
-        path: "/",
-        maxAge: 60 * 60 * 24 * 7, // 7 days,
-      });
     }
 
     await knex("transactions").insert({
