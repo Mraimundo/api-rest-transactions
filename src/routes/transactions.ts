@@ -77,20 +77,6 @@ export async function transactionsRoutes(app: FastifyInstance) {
       return { transaction };
     }
   );
-  app.get("/:id", { preHandler: [checkSessionIdExists] }, async (request) => {
-    const getTransactionParamsSchema = z.object({
-      id: z.string().uuid(),
-    });
-
-    const { id } = getTransactionParamsSchema.parse(request.params);
-    const { sessionId } = request.cookies;
-
-    const transaction = await knex("transactions")
-      .where({ session_id: sessionId, id })
-      .first();
-
-    return { transaction };
-  });
 
   app.get(
     "/summary",
