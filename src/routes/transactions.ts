@@ -23,6 +23,13 @@ export async function transactionsRoutes(app: FastifyInstance) {
 
       reply.setCookie("sessionId", sessionId, {
         path: "/",
+        maxAge: 60 * 60 * 24 * 7, // 7 days
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+      });
+      reply.setCookie("sessionId", sessionId, {
+        path: "/",
         maxAge: 60 * 60 * 24 * 7, // 7 days,
       });
     }
@@ -48,6 +55,28 @@ export async function transactionsRoutes(app: FastifyInstance) {
     return { transactions };
   });
 
+  app.get(
+    "/:id",
+    { preHandler: [checkSessionIdExists] },
+    async (request, reply) => {
+      const getTransactionParamsSchema = z.object({
+        id: z.string().uuid(),
+      });
+
+      const { id } = getTransactionParamsSchema.parse(request.params);
+      const { sessionId } = request.cookies;
+
+      const transaction = await knex("transactions")
+        .where({ session_id: sessionId, id })
+        .first();
+
+      if (!transaction) {
+        return reply.status(404).send({ message: "Transaction not found" });
+      }
+
+      return { transaction };
+    }
+  );
   app.get("/:id", { preHandler: [checkSessionIdExists] }, async (request) => {
     const getTransactionParamsSchema = z.object({
       id: z.string().uuid(),
