@@ -155,6 +155,31 @@ curl -i \
 
 ```
 
+- GET /transactions
+  - Descrição: lista todas as transações da sessão atual
+  - Autenticação: exige cookie sessionId
+  - Respostas: - Respostas: - Body:
+
+          ```json
+            {
+            "transactions": [
+              {
+                "id": "uuid",
+                "title": "Salário",
+                "amount": 5000,
+                "type": "credit",
+                "created_at": "2024-01-01T12:00:00.000Z"
+              }
+            ]
+
+    }
+
+    ```
+
+    ```
+
+  - 401 Unauthorized (se cookie ausente)
+
 ## Estrutura do Projeto (resumo)
 
 ```
