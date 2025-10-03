@@ -1,5 +1,16 @@
+# Dependencies
 node_modules
-db/app.db
+
+# Database
+db/*.db
 .DS_Store
+
+# Environment variables
 .env
 .env.test
+
+# Build files
+build
+
+#
+coverage
