@@ -15,20 +15,29 @@ API REST de transações construída com Fastify, TypeScript, Knex e SQLite. Inc
 ## Requisitos Funcionais
 
 - [x] O usuário deve poder criar uma nova transação
-- [ ] O usuário deve poder obter um resumo da sua conta
-- [ ] O usuário deve poder listar todas transações que já ocorreram
-- [ ] O usuário deve poder visualizar uma transação única
+- [x] O usuário deve poder obter um resumo da sua conta
+- [x] O usuário deve poder listar todas transações que já ocorreram
+- [x] O usuário deve poder visualizar uma transação única
 
 ## Requisitos Não Funcionais
 
 - [x] A transação pode ser do tipo crédito (soma) ou débito (subtrai)
-- [ ] Deve ser possível identificarmos o usuário entre as requisições
-- [ ] O usuário só pode visualizar transações as quais ele criou
+- [x] Deve ser possível identificarmos o usuário entre as requisições
+- [x] O usuário só pode visualizar transações as quais ele criou
 
 ## Pré-requisitos
 
 - Node.js 18+ (recomendado 20+)
 - npm 9+
+  {
+  "transaction": {
+  "id": "uuid",
+  "title": "Salário",
+  "amount": 5000,
+  "type": "credit",
+  "created_at": "2024-01-01T12:00:00.000Z"
+  }
+  }
 
 ## Instalação
 
@@ -88,6 +97,7 @@ Servidor inicia por padrão em http://localhost:3333
 - Migrações em `./db/migrations`
 
 Tabelas principais:
+
 - transactions
   - id: uuid (PK)
   - session_id: uuid (opcional, index)
@@ -95,6 +105,23 @@ Tabelas principais:
   - amount: decimal (débitos são armazenados como valores negativos)
   - type: enum("credit" | "debit")
   - created_at: timestamp (default now)
+
+## Autenticação/Identificação por sessão
+
+A API identifica o usuário via cookie de sessão HTTP-only:
+
+- Nome do cookie: sessionId
+
+- Propriedades: HttpOnly; Path=/; SameSite=Lax; (pode incluir Max-Age/Expires)
+
+- Criação: o cookie é definido na primeira criação de transação (POST /transactions) caso não exista
+
+- Escopo: todas as operações de leitura listam/consultam apenas dados vinculados ao session_id do cookie
+
+- Regras de acesso:
+  - Rotas de leitura exigem a presença do sessionId; caso ausente, retornam 401 Unauthorized
+  - Cada sessão só enxerga suas próprias transações
+    Dica cURL: use -c cookie.txt para salvar e -b cookie.txt para reutilizar o cookie entre requisições.
 
 ## Endpoints
 
@@ -112,8 +139,10 @@ Base URL: `http://localhost:3333`
     ```
   - Regras:
     - type: "credit" soma ao saldo; "debit" armazena o valor como negativo
+    - Define o cookie sessionId se ainda não existir
   - Respostas:
     - 201 Created (sem corpo)
+  - Headers: Set-Cookie: sessionId=...; HttpOnly; Path=/; ...
 
 Exemplo cURL:
 
@@ -121,13 +150,16 @@ Exemplo cURL:
 curl -i \
   -X POST http://localhost:3333/transactions \
   -H "Content-Type: application/json" \
-  -d '{"title":"Salário","amount":5000,"type":"credit"}'
+  -d '{"title":"Salário","amount":5000,"type":"credit"}' \
+  -c cookie.txt
+
 ```
 
 ## Estrutura do Projeto (resumo)
 
 ```
 .
+├─.
 ├── db/
 │   └── migrations/
 ├── src/
@@ -139,7 +171,8 @@ curl -i \
 ├── knexfile.ts
 ├── package.json
 ├── tsconfig.json
-└── .env (.env.exemple)
+└── .env (.env.exemple)─ db/
+
 ```
 
 ## Qualidade de Código
@@ -157,7 +190,8 @@ npm run lint
 
 ## Roadmap
 
-- Listagem de transações do usuário (GET /transactions)
-- Detalhe de transação (GET /transactions/:id)
-- Resumo de saldo (GET /transactions/summary)
-- Autenticação/identificação por sessão (session_id) e escopo de acesso por usuário
+- Paginação e filtros na listagem de transações
+- Soft delete/restore de transações
+- Testes automatizados (unitários e E2E)
+- Observabilidade (logs estruturados, métricas)
+- Dockerfile e compose para desenvolvimento
